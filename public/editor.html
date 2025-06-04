@@ -25,40 +25,38 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
 
 <script>
+  const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+    mode: 'htmlmixed',
+    lineNumbers: true,
+    lineWrapping: true
+  });
+
   const socket = io();
 
-  const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
-    mode: "text/html",
-    lineNumbers: true,
-    lineWrapping: true,
-  });
+  let isTyping = false;
+  let typingTimeout;
 
-  // Задаём размер редактора на весь экран
-  editor.setSize("100%", "100%");
-
-  // Дебаунс для отправки изменений — 400 мс после паузы в наборе
-  let timeout = null;
-
-  editor.on('change', () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      socket.emit('contentChange', editor.getValue());
-    }, 400);
-  });
-
-  // При получении обновлений от сервера — обновляем содержимое аккуратно
+  // При получении нового содержимого от сервера — если ты не печатаешь
   socket.on('update', (data) => {
-    const current = editor.getValue();
-    if (current !== data) {
+    if (!isTyping) {
       const cursor = editor.getCursor();
-      const scrollInfo = editor.getScrollInfo();
       editor.setValue(data);
       editor.setCursor(cursor);
-      editor.scrollTo(scrollInfo.left, scrollInfo.top);
     }
   });
 
+  // Отправка на сервер при изменении содержимого
+  editor.on('change', () => {
+    isTyping = true;
+    socket.emit('contentChange', editor.getValue());
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      isTyping = false;
+    }, 1000); // 1 секунда после последнего ввода
+  });
 </script>
+
 
 </body>
 </html>
