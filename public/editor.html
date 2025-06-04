@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Редактор</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #editor {
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+<body>
+
+<textarea id="editor"></textarea>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+
+<script>
+  const socket = io();
+
+  const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+    mode: "text/html",
+    lineNumbers: true,
+    lineWrapping: true,
+  });
+
+  // Задаём размер редактора на весь экран
+  editor.setSize("100%", "100%");
+
+  // Дебаунс для отправки изменений — 400 мс после паузы в наборе
+  let timeout = null;
+
+  editor.on('change', () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      socket.emit('contentChange', editor.getValue());
+    }, 400);
+  });
+
+  // При получении обновлений от сервера — обновляем содержимое аккуратно
+  socket.on('update', (data) => {
+    const current = editor.getValue();
+    if (current !== data) {
+      const cursor = editor.getCursor();
+      const scrollInfo = editor.getScrollInfo();
+      editor.setValue(data);
+      editor.setCursor(cursor);
+      editor.scrollTo(scrollInfo.left, scrollInfo.top);
+    }
+  });
+
+</script>
+
+</body>
+</html>
