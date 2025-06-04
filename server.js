@@ -46,7 +46,7 @@ function uploadBackup() {
   const backupContent = JSON.stringify({ content, timestamp: new Date() }, null, 2);
   const fileMetadata = {
     name: `backup-${new Date().toISOString()}.json`,
-    parents: ['YOUR_FOLDER_ID'], // <-- сюда впиши ID своей папки
+    parents: ['1oxxWwyZ-7DK7r4CCZT9JHso4eJ987jsB'], // <-- сюда впиши ID своей папки
   };
 
   const media = {
