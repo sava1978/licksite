@@ -1,28 +1,48 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+const path = require('path');
 
-let htmlContent = '<h1>Начальный контент</h1>';
+let content = '<h1>Добро пожаловать!</h1>';
 
-app.use(express.static('public')); // папка с frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Отдаём editor.html по адресу /editor.html
+app.get('/editor.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'editor.html'));
+});
+
+// Отдаём preview.html по адресу /preview.html
+app.get('/preview.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'preview.html'));
+});
+
+// Корневая страница по желанию
+app.get('/', (req, res) => {
+  res.redirect('/editor.html');
+});
+
+// Socket.io логика
 io.on('connection', (socket) => {
-  // Отправляем сразу текущий html новому клиенту
-  socket.emit('update', htmlContent);
+  console.log('Пользователь подключился');
 
-  // Получаем изменения от редактора
-  socket.on('contentChange', (newContent) => {
-    htmlContent = newContent;
-    // Рассылаем всем, кроме отправителя
-    socket.broadcast.emit('update', htmlContent);
+  // Отправить текущий контент новому подключившемуся
+  socket.emit('update', content);
+
+  // При изменении контента — рассылаем всем
+  socket.on('contentChange', (data) => {
+    content = data;
+    socket.broadcast.emit('update', content);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Пользователь отключился');
   });
 });
 
+// Порт от Render или локальный
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+http.listen(PORT, () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
 });
