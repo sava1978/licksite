@@ -8,19 +8,19 @@ let content = '<h1>Добро пожаловать!</h1>';
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Отдаём editor.html по адресу /editor.html
+// Отдаём editor.html
 app.get('/editor.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'editor.html'));
 });
 
-// Отдаём preview.html по адресу /preview.html
+// Отдаём preview.html
 app.get('/preview.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'preview.html'));
 });
 
-// Корневая страница по желанию
+// Корень теперь отдаёт preview.html
 app.get('/', (req, res) => {
-  res.redirect('/editor.html');
+  res.sendFile(path.join(__dirname, 'public', 'preview.html'));
 });
 
 // Socket.io логика
